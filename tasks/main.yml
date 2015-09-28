@@ -1,0 +1,39 @@
+---
+# tasks file for mariadb
+
+# Install packages required for Ansible to manage MySQL
+- name: Install python pip
+  yum: name=python-pip state=present
+
+- name: Install python-devel; required for pip to build 'MySQL-python'
+  # http://stackoverflow.com/questions/13044201/install-mysql-python-return-error-in-centos
+  yum: name=python-devel state=present
+
+- name: Install Python package 'MySQL-python' on remote host; required by Ansible
+  pip: name=MySQL-python state=present
+
+- name: Configure my.cnf
+  lineinfile:
+    dest: "{{ my_cnf_location }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - { regexp: "^#?character-set-server", line: "character-set-server={{ mysql_server_character_set }}" }
+    - { regexp: "^#?collation-server", line: "collation-server={{ mysql_collation_server }}" }
+    - { regexp: "^#?default-storage-engine", line: "default-storage-engine={{ default_storage_engine }}" }
+    - { regexp: "^#?innodb_buffer_pool_size", line: "innodb_buffer_pool_size={{ innodb_buffer_pool_size }}" }
+    - { regexp: "^#?innodb_buffer_pool_instances", line: "innodb_buffer_pool_instances={{ innodb_buffer_pool_instances }}" }
+    - { regexp: "^#?innodb_io_capacity", line: "innodb_io_capacity={{ innodb_io_capacity }}" }
+    - { regexp: "^#?innodb_read_io_threads", line: "innodb_read_io_threads={{ innodb_read_io_threads }}" }
+    - { regexp: "^#?innodb_write_io_threads", line: "innodb_write_io_threads={{ innodb_write_io_threads }}" }
+  notify: restart mysqld
+
+- name: Remove default MySQL test database
+  mysql_db: db=test state=absent
+
+- name: Ensure anonymous users are not in the database
+  mysql_user: name='' host={{ item }} state=absent
+  with_items:
+    - localhost
+    - "{{ inventory_hostname }}"

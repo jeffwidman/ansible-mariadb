@@ -1,0 +1,25 @@
+---
+# defaults file for mariadb
+
+# MySQL configuration
+my_cnf_location: /etc/my.cnf
+
+mysql_collation_server: utf8mb4_unicode_ci
+mysql_server_character_set: utf8mb4
+default_storage_engine: InnoDB
+
+innodb_buffer_pool_size: 500M
+# MariaDB 10 default is 1 buffer pool instance while innodb_buffer_pool < 1GB,
+# then jumps to 8, which is too high for such a small VPS.
+# Ideal is at least 1GB RAM per pool instance:
+# https://mariadb.com/kb/en/mariadb/xtradbinnodb-server-system-variables/#innodb_buffer_pool_instances
+innodb_buffer_pool_instances: 1
+
+innodb_io_capacity: 1000 # This default assumes SSD, if using spinning disks, lower this
+innodb_read_io_threads: 6
+innodb_write_io_threads: 4
+
+# WARNING: If innodb_log_file_size is changed after MySQL is initially booted, then mysql will fail to restart.
+# Must first stop MySQL, move the existing log files, then reboot.
+# Details: https://community.centminmod.com/threads/cannot-set-default-storage-engine-to-innodb.1540/#post-7218
+# innodb_log_file_size: 128M
